@@ -1,0 +1,12 @@
+{
+  "scenarios": {
+    "en": [
+      "scenario_1": "Example scenario 1 in English",
+      "scenario_2": "Example scenario 2 in English"
+    ],
+    "ar": [
+      "scenario_1": "مثال على السيناريو 1 بالعربية",
+      "scenario_2": "مثال على السيناريو 2 بالعربية"
+    ]
+  }
+}
