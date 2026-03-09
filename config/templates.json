@@ -1,12 +1,16 @@
 {
   "scenarios": {
-    "en": [
-      "scenario_1": "Example scenario 1 in English",
-      "scenario_2": "Example scenario 2 in English"
-    ],
-    "ar": [
-      "scenario_1": "مثال على السيناريو 1 بالعربية",
-      "scenario_2": "مثال على السيناريو 2 بالعربية"
-    ]
+    "en": {
+      "product_review": "Check out this amazing product I found on Amazon! {product_name} - {description}. Get it here: {affiliate_link}",
+      "deal_alert": "DEAL ALERT! {product_name} is now {discount}% off on Amazon! Don't miss out: {affiliate_link}",
+      "comparison": "Looking for the best {category}? Here's my top pick: {product_name}. See details: {affiliate_link}",
+      "recommendation": "I highly recommend {product_name} for anyone looking for {use_case}. Check it out: {affiliate_link}"
+    },
+    "ar": {
+      "product_review": "اكتشفت منتج رائع على أمازون! {product_name} - {description}. احصل عليه من هنا: {affiliate_link}",
+      "deal_alert": "تنبيه عرض! {product_name} الآن بخصم {discount}% على أمازون! لا تفوت الفرصة: {affiliate_link}",
+      "comparison": "تبحث عن أفضل {category}؟ هذا اختياري الأول: {product_name}. شاهد التفاصيل: {affiliate_link}",
+      "recommendation": "أنصح بشدة بـ {product_name} لأي شخص يبحث عن {use_case}. تفقده هنا: {affiliate_link}"
+    }
   }
 }
