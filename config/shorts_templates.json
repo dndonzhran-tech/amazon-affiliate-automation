@@ -1,0 +1,58 @@
+{
+  "shorts": {
+    "en": {
+      "shock_value": {
+        "hook": "You're wasting money if you don't know about THIS...",
+        "body": "This {product_name} is rated {rating}/5 by thousands of buyers. The quality is insane for the price. Here's what makes it different...",
+        "cta": "Link in description — grab it before the price goes back up!"
+      },
+      "curiosity_gap": {
+        "hook": "I found something on Amazon that changed everything...",
+        "body": "{product_name} — and before you ask, YES it's worth every penny. {rating}/5 rating doesn't lie. Here's the deal...",
+        "cta": "Link below! Don't say I didn't tell you!"
+      },
+      "problem_solution": {
+        "hook": "Everyone's been looking for THIS...",
+        "body": "The {product_name} solves a problem you didn't even know you had. At just {price}, this is a no-brainer. {rating}/5 from real buyers.",
+        "cta": "Check the link in my description before it sells out!"
+      },
+      "social_proof": {
+        "hook": "This product has {review_count}+ reviews and counting...",
+        "body": "{product_name} — rated {rating}/5 stars. There's a reason everyone is buying this. The quality speaks for itself.",
+        "cta": "Tap the link in description — you won't regret it!"
+      },
+      "deal_hunter": {
+        "hook": "I just found the BIGGEST Amazon deal today...",
+        "body": "{product_name} at {price}?! That's {discount}% OFF! This deal won't last. {rating}/5 rated by real buyers.",
+        "cta": "Grab it NOW — link in description!"
+      }
+    },
+    "ar": {
+      "shock_value": {
+        "hook": "أنت تضيع فلوسك إذا ما تعرف عن هذا المنتج...",
+        "body": "هذا {product_name} تقييمه {rating}/5 من آلاف المشترين. الجودة خرافية مقابل السعر. شوف وش يميزه...",
+        "cta": "الرابط في الوصف — اطلبه قبل ما يرجع السعر الأصلي!"
+      },
+      "curiosity_gap": {
+        "hook": "لقيت شي في أمازون غيّر كل شي عندي...",
+        "body": "{product_name} — وقبل ما تسأل، إيه يستاهل كل ريال. تقييم {rating}/5 ما يكذب. هذي الصفقة...",
+        "cta": "الرابط تحت! لا تقول ما قلت لك!"
+      },
+      "problem_solution": {
+        "hook": "الكل يدوّر على هالشي...",
+        "body": "{product_name} يحل مشكلة ما كنت تعرف إنها عندك. بس بـ {price}، هذي فرصة ذهبية. تقييم {rating}/5 من مشترين حقيقيين.",
+        "cta": "شيك الرابط في الوصف قبل ما يخلص!"
+      },
+      "social_proof": {
+        "hook": "هذا المنتج عليه {review_count}+ تقييم وماشاءالله...",
+        "body": "{product_name} — تقييمه {rating}/5 نجوم. فيه سبب ليش الكل يشتريه. الجودة تتكلم عن نفسها.",
+        "cta": "اضغط الرابط في الوصف — مستحيل تندم!"
+      },
+      "deal_hunter": {
+        "hook": "لقيت أقوى عرض في أمازون اليوم...",
+        "body": "{product_name} بـ {price}؟! يعني خصم {discount}%! هالعرض ما راح يدوم. تقييم {rating}/5 من مشترين حقيقيين.",
+        "cta": "اطلبه الحين — الرابط في الوصف!"
+      }
+    }
+  }
+}

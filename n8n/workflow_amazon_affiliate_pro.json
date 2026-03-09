@@ -1,0 +1,286 @@
+{
+  "name": "Amazon Affiliate Automation PRO + YouTube Shorts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://real-time-amazon-data.p.rapidapi.com/deals-v2",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "country", "value": "={{ $env.AMAZON_COUNTRY || 'US' }}" },
+            { "name": "category_id", "value": "={{ $env.PRODUCT_CATEGORY || 'electronics' }}" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-RapidAPI-Key", "value": "={{ $env.RAPIDAPI_KEY }}" },
+            { "name": "X-RapidAPI-Host", "value": "real-time-amazon-data.p.rapidapi.com" }
+          ]
+        },
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "http-fetch-products",
+      "name": "Fetch Amazon Products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process Amazon products - filter, enrich, and prepare for AI\nconst input = $input.all();\nconst data = input[0].json;\nconst products = data.deals || data.products || [];\nconst affiliateTag = $env.AMAZON_AFFILIATE_TAG || 'yourtag-20';\nconst maxProducts = parseInt($env.MAX_POSTS_PER_RUN || '3');\nconst language = $env.LANGUAGE || 'en';\n\n// Filter products with good ratings and prepare data\nconst processed = products\n  .filter(p => p.title && p.asin)\n  .filter(p => !p.rating || p.rating >= 3.5) // Only good products\n  .slice(0, maxProducts)\n  .map((p, index) => {\n    const price = typeof p.price === 'object' ? p.price.current_price : p.price;\n    const currency = typeof p.price === 'object' ? p.price.currency : 'USD';\n    const affiliateLink = `https://www.amazon.com/dp/${p.asin}?tag=${affiliateTag}`;\n    \n    return {\n      index: index + 1,\n      asin: p.asin,\n      title: p.title,\n      price: price || 'Check price',\n      currency: currency || 'USD',\n      rating: p.rating || 'N/A',\n      reviewCount: p.reviews_count || p.review_count || 'many',\n      image: p.image || p.thumbnail || '',\n      category: p.category || 'General',\n      discount: p.discount_percent || p.savings_percent || 0,\n      affiliateLink: affiliateLink,\n      language: language,\n      features: (p.features || []).slice(0, 3).join('. ') || 'Premium quality product'\n    };\n  });\n\nif (processed.length === 0) {\n  throw new Error('No valid products found after filtering');\n}\n\nreturn processed.map(p => ({ json: p }));"
+      },
+      "id": "code-process",
+      "name": "Process Products",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "text": "=Create TWO pieces of content for this Amazon product:\n\n**PRODUCT INFO:**\n- Name: {{ $json.title }}\n- Price: {{ $json.price }} {{ $json.currency }}\n- Rating: {{ $json.rating }}/5 ({{ $json.reviewCount }} reviews)\n- Category: {{ $json.category }}\n- Discount: {{ $json.discount }}%\n- Link: {{ $json.affiliateLink }}\n- Features: {{ $json.features }}\n\n**TASK 1 - SOCIAL MEDIA POST ({{ $json.language == 'ar' ? 'Arabic' : 'English' }}):**\nWrite a high-converting social media post:\n- Maximum 280 characters (excluding hashtags)\n- Start with emoji + attention-grabbing hook\n- Include rating as social proof\n- Strong call-to-action with the affiliate link\n- Add 5 relevant hashtags at the end\n\n**TASK 2 - YOUTUBE SHORTS SCRIPT ({{ $json.language == 'ar' ? 'Arabic' : 'English' }}):**\nWrite a 30-second YouTube Shorts voiceover script:\n- HOOK (0-3s): Pattern interrupt - shocking statement or curiosity gap that stops scrolling\n- BODY (3-25s): Fast-paced product showcase, focus on transformation/benefits not features. Short punchy sentences. Include rating and price.\n- CTA (25-30s): Urgency-driven call to action - tell them link is in description\n- Also provide: SEO YouTube title (under 70 chars with emoji), and YouTube description with the affiliate link\n\n**RESPOND IN THIS EXACT FORMAT:**\n---SOCIAL_POST---\n[your social media post here with hashtags]\n---SHORTS_HOOK---\n[the first 3 seconds hook]\n---SHORTS_BODY---\n[the main 20 second body]\n---SHORTS_CTA---\n[the final call to action]\n---YOUTUBE_TITLE---\n[SEO optimized title]\n---YOUTUBE_DESCRIPTION---\n[full YouTube description with affiliate link]\n---END---",
+        "options": {
+          "systemMessage": "=You are an elite affiliate marketing content creator with 20 years of experience. You've generated over $50M in affiliate revenue. You deeply understand:\n\n1. DIRECT RESPONSE COPYWRITING: Headlines that stop scrolls, power words that trigger emotion, urgency that drives action\n2. YOUTUBE ALGORITHM: Hook retention, watch time optimization, CTR-boosting titles and thumbnails\n3. SOCIAL MEDIA ALGORITHMS: Engagement triggers, hashtag strategy, viral content patterns\n4. CONSUMER PSYCHOLOGY: FOMO, social proof, anchoring, scarcity, reciprocity\n\nYour content rules:\n- Never use fake claims or misleading discounts\n- Every sentence EARNS its place - zero fluff\n- Write for spoken delivery (natural, conversational)\n- Short punchy sentences (max 10 words)\n- Focus on TRANSFORMATION not features (\"You'll sleep like a baby\" not \"memory foam mattress\")\n- Always include social proof (ratings, review counts)\n- Create genuine urgency (price changes, stock levels)\n\nYou write exclusively in {{ $json.language == 'ar' ? 'Arabic' : 'English' }}.\n{{ $json.language == 'ar' ? 'Use Saudi/Gulf dialect for Shorts scripts to feel natural and relatable.' : '' }}"
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Content Creator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [940, 400]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.8,
+          "maxTokens": 1000,
+          "topP": 0.9
+        }
+      },
+      "id": "groq-model",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [820, 620],
+      "credentials": {
+        "groqApi": {
+          "id": "REPLACE_WITH_YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "={{ $json.asin || 'default' }}",
+        "contextWindowLength": 5
+      },
+      "id": "simple-memory",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [940, 620]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse AI response into structured social post + YouTube Shorts data\nconst input = $input.all();\nconst aiOutput = input[0].json.output || input[0].json.text || '';\nconst productData = input[0].json;\n\nfunction extractSection(text, startTag, endTag) {\n  const startIdx = text.indexOf(startTag);\n  if (startIdx === -1) return '';\n  const contentStart = startIdx + startTag.length;\n  const endIdx = endTag ? text.indexOf(endTag, contentStart) : text.length;\n  return text.substring(contentStart, endIdx === -1 ? text.length : endIdx).trim();\n}\n\nconst socialPost = extractSection(aiOutput, '---SOCIAL_POST---', '---SHORTS_HOOK---');\nconst shortsHook = extractSection(aiOutput, '---SHORTS_HOOK---', '---SHORTS_BODY---');\nconst shortsBody = extractSection(aiOutput, '---SHORTS_BODY---', '---SHORTS_CTA---');\nconst shortsCta = extractSection(aiOutput, '---SHORTS_CTA---', '---YOUTUBE_TITLE---');\nconst youtubeTitle = extractSection(aiOutput, '---YOUTUBE_TITLE---', '---YOUTUBE_DESCRIPTION---');\nconst youtubeDesc = extractSection(aiOutput, '---YOUTUBE_DESCRIPTION---', '---END---');\n\nconst fullScript = `[HOOK - 0-3s]\\n${shortsHook}\\n\\n[BODY - 3-25s]\\n${shortsBody}\\n\\n[CTA - 25-30s]\\n${shortsCta}`;\n\nreturn [{\n  json: {\n    // Product data (pass through)\n    asin: productData.asin,\n    title: productData.title,\n    price: productData.price,\n    affiliateLink: productData.affiliateLink,\n    image: productData.image,\n    \n    // Social media content\n    socialPost: socialPost,\n    \n    // YouTube Shorts content\n    shortsHook: shortsHook,\n    shortsBody: shortsBody,\n    shortsCta: shortsCta,\n    shortsFullScript: fullScript,\n    youtubeTitle: youtubeTitle.substring(0, 70),\n    youtubeDescription: youtubeDesc,\n    \n    // Metadata\n    language: productData.language || 'en',\n    generatedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "code-parse-ai",
+      "name": "Parse AI Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.PLATFORM1_API_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.PLATFORM1_API_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "text", "value": "={{ $json.socialPost }}" },
+            { "name": "link", "value": "={{ $json.affiliateLink }}" }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "http-post-platform1",
+      "name": "Post to Platform 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.PLATFORM2_API_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.PLATFORM2_API_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "message", "value": "={{ $json.socialPost }}" },
+            { "name": "link", "value": "={{ $json.affiliateLink }}" }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "http-post-platform2",
+      "name": "Post to Platform 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "maxItems": 3
+      },
+      "id": "limit-node",
+      "name": "Rate Limit",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [1700, 400]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "message": "=✅ *Affiliate Automation Complete*\n\n📦 *Product:* {{ $json.title }}\n💰 *Price:* {{ $json.price }}\n🔗 *Link:* {{ $json.affiliateLink }}\n\n📱 *Social Post:* Published\n🎬 *YouTube Script:* Generated\n\n---\n📝 *Shorts Script:*\n{{ $json.shortsFullScript }}\n\n🎯 *YouTube Title:* {{ $json.youtubeTitle }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "telegram-notify",
+      "name": "Send Telegram Notification",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1940, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_WITH_YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Save YouTube Shorts script data for video creation\nconst input = $input.all();\nconst item = input[0].json;\n\n// Prepare data for YouTube upload or manual video creation\nconst youtubeData = {\n  title: item.youtubeTitle,\n  description: item.youtubeDescription,\n  script: item.shortsFullScript,\n  hook: item.shortsHook,\n  body: item.shortsBody,\n  cta: item.shortsCta,\n  product: {\n    name: item.title,\n    price: item.price,\n    link: item.affiliateLink,\n    image: item.image\n  },\n  tags: [\n    'amazon finds', 'amazon deals', 'amazon must haves',\n    'best amazon products', item.title.split(' ').slice(0, 3).join(' ')\n  ],\n  metadata: {\n    categoryId: '22',\n    privacyStatus: 'public',\n    madeForKids: false,\n    language: item.language,\n    generatedAt: item.generatedAt\n  }\n};\n\nreturn [{ json: youtubeData }];"
+      },
+      "id": "code-youtube-prep",
+      "name": "Prepare YouTube Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1460, 700]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [{ "node": "Fetch Amazon Products", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Amazon Products": {
+      "main": [
+        [{ "node": "Process Products", "type": "main", "index": 0 }]
+      ]
+    },
+    "Process Products": {
+      "main": [
+        [{ "node": "AI Content Creator", "type": "main", "index": 0 }]
+      ]
+    },
+    "AI Content Creator": {
+      "main": [
+        [{ "node": "Parse AI Content", "type": "main", "index": 0 }]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [{ "node": "AI Content Creator", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [{ "node": "AI Content Creator", "type": "ai_memory", "index": 0 }]
+      ]
+    },
+    "Parse AI Content": {
+      "main": [
+        [
+          { "node": "Post to Platform 1", "type": "main", "index": 0 },
+          { "node": "Post to Platform 2", "type": "main", "index": 0 },
+          { "node": "Prepare YouTube Data", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Post to Platform 1": {
+      "main": [
+        [{ "node": "Rate Limit", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to Platform 2": {
+      "main": [
+        [{ "node": "Rate Limit", "type": "main", "index": 0 }]
+      ]
+    },
+    "Rate Limit": {
+      "main": [
+        [{ "node": "Send Telegram Notification", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "tags": [
+    { "name": "affiliate-marketing" },
+    { "name": "youtube-shorts" },
+    { "name": "automation" }
+  ]
+}

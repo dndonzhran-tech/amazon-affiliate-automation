@@ -1,101 +1,113 @@
-# Amazon Affiliate Automation
+# Amazon Affiliate Automation PRO
 
-Automated Amazon affiliate marketing system that fetches trending products, generates high-converting promotional content using AI (Groq), and posts to social media platforms — all on a configurable schedule.
+نظام أتمتة التسويق بالعمولة لأمازون — يجلب المنتجات الرائجة، يولّد محتوى تسويقي احترافي بالذكاء الاصطناعي (Groq)، ينشر على السوشال ميديا، ويولّد سكريبتات YouTube Shorts جاهزة للتسجيل.
 
-This project is the Python equivalent of the n8n workflow, designed to run standalone without n8n dependency.
-
-## Workflow
+## سير العمل (Workflow)
 
 ```
 Schedule Trigger → Fetch Products (Amazon API) → Process & Filter
-    → AI Content Generation (Groq) → Post to Platforms → Send Notification
+    → AI Content Generation (Groq) → Post to Social Media
+                                    → Generate YouTube Shorts Scripts
+    → Send Telegram Notification
 ```
 
-### Workflow Steps
+## المميزات
 
-1. **Schedule Trigger** — Runs automatically at configurable intervals
-2. **HTTP Request** — Fetches trending/deal products from Amazon via RapidAPI
-3. **Process Data** — Filters products, builds affiliate links, applies limits
-4. **AI Agent (Groq)** — Generates high-converting marketing copy using expert prompts
-5. **Post to Platforms** — Publishes content to configured social media APIs
-6. **Notification** — Sends a summary report via Telegram/Slack webhook
+- **جلب تلقائي** لأفضل المنتجات والعروض من أمازون
+- **AI احترافي** (Groq LLaMA 3.3 70B) لتوليد محتوى عالي التحويل
+- **سوشال ميديا** — نشر تلقائي على Twitter/X، Facebook، وغيرها
+- **YouTube Shorts** — سكريبتات كاملة (Hook + Body + CTA) جاهزة للتسجيل
+- **دعم عربي + إنجليزي** مع لهجة خليجية طبيعية للـ Shorts
+- **إشعارات تيليجرام** بملخص كل عملية
+- **n8n Workflow جاهز** للاستيراد مباشرة
 
-## Project Structure
+## هيكل المشروع
 
 ```
 amazon-affiliate-automation/
 ├── src/
-│   ├── main.py          # Main application & workflow orchestration
-│   ├── utils.py         # API calls, AI generation, posting utilities
-│   └── models.py        # Data models (Product, GeneratedContent, PostResult)
+│   ├── main.py          # التطبيق الرئيسي (Python)
+│   ├── utils.py         # أدوات API والنشر
+│   ├── youtube.py       # توليد سكريبتات Shorts ورفع YouTube
+│   └── models.py        # نماذج البيانات
+├── n8n/
+│   └── workflow_amazon_affiliate_pro.json  # n8n workflow جاهز للاستيراد
 ├── config/
-│   ├── hashtags.json    # Hashtags for English and Arabic
-│   └── templates.json   # Post templates for English and Arabic
-├── tests/               # Unit tests
-├── .env.example         # Environment variables template
-├── requirements.txt     # Python dependencies
+│   ├── hashtags.json          # هاشتاقات (عربي + إنجليزي)
+│   ├── templates.json         # قوالب المنشورات
+│   ├── shorts_templates.json  # قوالب سكريبتات YouTube Shorts
+│   └── youtube_tags.json      # تاقات YouTube
+├── output/
+│   ├── scripts/         # سكريبتات Shorts المحفوظة
+│   └── videos/          # فيديوهات للرفع
+├── .env.example
+├── requirements.txt
 └── README.md
 ```
 
-## Prerequisites
+## المتطلبات
 
 - Python 3.10+
-- [RapidAPI account](https://rapidapi.com/) with Amazon Data API subscription
-- [Groq API key](https://console.groq.com/) for AI content generation
-- Amazon Associates affiliate tag
-- Social media API tokens (Twitter/X, Facebook, etc.)
-- Telegram bot token or Slack webhook URL (for notifications)
+- حساب [RapidAPI](https://rapidapi.com/) مع اشتراك Amazon Data API
+- [مفتاح Groq API](https://console.groq.com/)
+- تاق Amazon Associates
+- توكنات سوشال ميديا (اختياري)
+- YouTube Data API v3 (اختياري — للرفع التلقائي)
+- بوت تيليجرام (اختياري — للإشعارات)
 
-## Installation
+## التثبيت
 
 ```bash
 git clone https://github.com/dndonzhran-tech/amazon-affiliate-automation.git
 cd amazon-affiliate-automation
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your actual API keys and configuration
+# عدّل .env بمفاتيحك الفعلية
 ```
 
-## Configuration
+## الاستخدام
 
-Copy `.env.example` to `.env` and configure:
+### Python
 
-| Variable | Description |
-|----------|-------------|
-| `RAPIDAPI_KEY` | Your RapidAPI key for Amazon product data |
-| `RAPIDAPI_HOST` | RapidAPI host for the Amazon API |
-| `AMAZON_AFFILIATE_TAG` | Your Amazon Associates tag (e.g., `yourtag-20`) |
-| `GROQ_API_KEY` | Groq API key for AI content generation |
-| `LANGUAGE` | Content language: `en` or `ar` |
-| `PRODUCT_CATEGORY` | Product category to fetch (e.g., `electronics`) |
-| `MAX_POSTS_PER_RUN` | Maximum products to process per run |
-| `PLATFORM1_API_URL` | First platform API endpoint |
-| `PLATFORM1_API_TOKEN` | First platform auth token |
-| `PLATFORM2_API_URL` | Second platform API endpoint |
-| `PLATFORM2_API_TOKEN` | Second platform auth token |
-| `NOTIFICATION_WEBHOOK_URL` | Telegram/Slack webhook for notifications |
-
-## Usage
-
-### Run once
 ```bash
+# تشغيل كامل (سوشال + يوتيوب)
 python src/main.py
+
+# سوشال ميديا فقط
+python src/main.py --mode social
+
+# YouTube Shorts فقط
+python src/main.py --mode youtube
+
+# جدولة تلقائية كل 30 دقيقة
+python src/main.py --schedule --interval 30
 ```
 
-### Run on a schedule (every 60 minutes)
-```bash
-python src/main.py --schedule --interval 60
-```
+### n8n (الطريقة الموصى بها)
 
-## Customization
+1. افتح n8n (`http://localhost:5678`)
+2. اذهب لـ **Settings > Environment Variables** وأضف المتغيرات من `.env.example`
+3. استورد الـ workflow:
+   - اضغط على الثلاث نقط (...) أعلى يمين
+   - اختر **Import from file**
+   - اختر `n8n/workflow_amazon_affiliate_pro.json`
+4. اربط credentials الـ Groq والتيليجرام
+5. اضغط **Execute Workflow** للتجربة
+6. فعّل **Publish** للجدولة التلقائية
 
-### Templates (`config/templates.json`)
-Add or modify post templates per language. Templates use `{product_name}` and `{affiliate_link}` placeholders.
+## تخصيص المحتوى
 
-### Hashtags (`config/hashtags.json`)
-Add or modify hashtags per language. 5 random hashtags are selected per post.
+### قوالب السوشال ميديا (`config/templates.json`)
+6 أنماط مختلفة: تنبيه عرض، اختيار أفضل، مراجعة، مقارنة، استعجال، قيمة مقابل المال
 
-## Supported Languages
+### سكريبتات YouTube Shorts (`config/shorts_templates.json`)
+5 أنماط فيروسية: صدمة، فضول، مشكلة-حل، إثبات اجتماعي، صياد العروض
 
-- **English** (`en`) — Optimized for US/global audiences
-- **Arabic** (`ar`) — Optimized for Saudi Arabia, UAE, and Arabic-speaking markets
+### الهاشتاقات والتاقات
+- `config/hashtags.json` — 15 هاشتاق لكل لغة (عربي + إنجليزي)
+- `config/youtube_tags.json` — 20 تاق YouTube لكل لغة
+
+## اللغات المدعومة
+
+- **العربية** (`ar`) — مُحسّنة للسوق السعودي والإماراتي والخليجي
+- **الإنجليزية** (`en`) — مُحسّنة للسوق الأمريكي والعالمي
