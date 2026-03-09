@@ -31,6 +31,8 @@ from utils import (
     rate_limit_wait,
     send_notification,
 )
+from analytics import AnalyticsTracker
+from validators import validate_product
 from tts import generate_voiceover
 from video import create_short_video
 from youtube import (
@@ -206,11 +208,17 @@ def run_workflow(mode: str = "all"):
 
     logger.info("Found %d products.", len(products))
 
-    # --- Step 2: Process products ---
+    # --- Step 2: Validate and process products ---
+    valid_products = []
     for product in products:
+        is_valid, reason = validate_product(product)
+        if not is_valid:
+            logger.warning("Skipping invalid product (ASIN=%s): %s", product.asin, reason)
+            continue
         product.affiliate_link = build_affiliate_link(product.asin, affiliate_tag)
+        valid_products.append(product)
 
-    products = products[:max_posts]
+    products = valid_products[:max_posts]
     logger.info("Processing %d products.", len(products))
 
     # --- Step 3: Run workflows based on mode ---
@@ -243,6 +251,15 @@ def run_workflow(mode: str = "all"):
     if notification_webhook:
         send_notification(summary, notification_webhook)
         logger.info("Notification sent.")
+
+    # --- Step 5: Track analytics ---
+    tracker = AnalyticsTracker()
+    tracker.track_run(
+        products_count=len(products),
+        social_posts=social_ok,
+        youtube_uploads=yt_ok,
+        errors=social_fail + yt_fail,
+    )
 
 
 def run_scheduled(mode: str = "all", interval_minutes: int = 60):

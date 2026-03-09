@@ -10,6 +10,7 @@ from pathlib import Path
 import requests
 
 from models import GeneratedContent, Product, PostResult
+from retry import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ def get_template(language: str = "en") -> str:
     return random.choice(list(scenarios.values()))
 
 
+@retry_with_backoff()
 def fetch_trending_products(
     api_key: str,
     api_host: str,
@@ -70,6 +72,7 @@ def build_affiliate_link(asin: str, affiliate_tag: str) -> str:
     return f"https://www.amazon.com/dp/{asin}?tag={affiliate_tag}"
 
 
+@retry_with_backoff()
 def generate_content_with_ai(
     product: Product,
     groq_api_key: str,
@@ -150,6 +153,7 @@ def generate_content_with_ai(
     )
 
 
+@retry_with_backoff()
 def post_to_platform(
     content: GeneratedContent,
     platform_api_url: str,
@@ -181,6 +185,7 @@ def post_to_platform(
         return PostResult(platform=platform_api_url, success=False, error=str(e))
 
 
+@retry_with_backoff()
 def send_notification(
     message: str,
     webhook_url: str,
