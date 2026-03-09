@@ -31,6 +31,8 @@ from utils import (
     rate_limit_wait,
     send_notification,
 )
+from tts import generate_voiceover
+from video import create_short_video
 from youtube import (
     generate_shorts_script,
     save_script_to_file,
@@ -88,50 +90,88 @@ def run_social_workflow(products: list[Product], groq_api_key: str, language: st
 
 
 def run_youtube_workflow(products: list[Product], groq_api_key: str, language: str) -> list:
-    """Generate YouTube Shorts scripts and optionally upload."""
+    """Full YouTube Shorts pipeline: Script → Voice → Video → Upload."""
     youtube_api_key = os.getenv("YOUTUBE_API_KEY", "")
     youtube_channel_id = os.getenv("YOUTUBE_CHANNEL_ID", "")
+    elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY", "")
+    elevenlabs_voice_id = os.getenv("ELEVENLABS_VOICE_ID", "pNInz6obpgDQGcFmaJgB")
+    creatomate_api_key = os.getenv("CREATOMATE_API_KEY", "")
+    creatomate_template_id = os.getenv("CREATOMATE_TEMPLATE_ID", "")
     videos_dir = os.getenv("VIDEOS_DIR", "output/videos")
 
     results = []
     for product in products:
-        logger.info("Generating YouTube Shorts script for: %s", product.title)
+        logger.info("=== Processing: %s ===", product.title)
+
+        # Step 1: Generate script
+        logger.info("[1/4] Generating script...")
         script = generate_shorts_script(
             product=product,
             groq_api_key=groq_api_key,
             language=language,
         )
-
-        # Always save script to file (for manual video creation or TTS)
         script_path = save_script_to_file(script)
         logger.info("Script saved: %s", script_path)
-        logger.info("--- SHORTS SCRIPT ---\n%s", script.full_script)
 
-        # Auto-upload if YouTube API is configured and video file exists
-        if youtube_api_key and youtube_channel_id:
-            safe_title = "".join(
-                c if c.isalnum() or c in " -_" else "" for c in product.title
-            )[:50].strip()
-            video_path = os.path.join(videos_dir, f"{safe_title}.mp4")
+        safe_title = "".join(
+            c if c.isalnum() or c in " -_" else "" for c in product.title
+        )[:50].strip()
 
-            if os.path.exists(video_path):
-                logger.info("Uploading to YouTube: %s", video_path)
-                result = upload_to_youtube(
-                    script=script,
-                    video_path=video_path,
-                    youtube_api_key=youtube_api_key,
-                    channel_id=youtube_channel_id,
-                )
-                results.append(result)
-                if result.success:
-                    logger.info("YouTube upload success: %s", result.url)
-                else:
-                    logger.error("YouTube upload failed: %s", result.error)
+        # Step 2: Generate voiceover with ElevenLabs
+        audio_path = None
+        if elevenlabs_api_key:
+            logger.info("[2/4] Generating Arabic voiceover (ElevenLabs)...")
+            audio_path = generate_voiceover(
+                text=script.full_script,
+                api_key=elevenlabs_api_key,
+                voice_id=elevenlabs_voice_id,
+                output_path=f"output/audio/{safe_title}.mp3",
+            )
+            if audio_path:
+                logger.info("Voiceover ready: %s", audio_path)
             else:
-                logger.info(
-                    "No video file found at %s — script saved for manual creation.",
-                    video_path,
-                )
+                logger.warning("Voiceover failed, continuing without audio...")
+        else:
+            logger.info("[2/4] Skipping voiceover (ELEVENLABS_API_KEY not set)")
+
+        # Step 3: Generate video with Creatomate
+        video_path = os.path.join(videos_dir, f"{safe_title}.mp4")
+        if creatomate_api_key:
+            logger.info("[3/4] Generating video (Creatomate)...")
+            generated_video = create_short_video(
+                api_key=creatomate_api_key,
+                template_id=creatomate_template_id or None,
+                script_text=script.body,
+                audio_path=audio_path,
+                product_image_url=product.image_url,
+                title_text=script.hook,
+                cta_text=script.cta,
+                output_dir=videos_dir,
+            )
+            if generated_video:
+                video_path = generated_video
+                logger.info("Video ready: %s", video_path)
+            else:
+                logger.warning("Video generation failed")
+        else:
+            logger.info("[3/4] Skipping video generation (CREATOMATE_API_KEY not set)")
+
+        # Step 4: Upload to YouTube
+        if youtube_api_key and youtube_channel_id and os.path.exists(video_path):
+            logger.info("[4/4] Uploading to YouTube...")
+            result = upload_to_youtube(
+                script=script,
+                video_path=video_path,
+                youtube_api_key=youtube_api_key,
+                channel_id=youtube_channel_id,
+            )
+            results.append(result)
+            if result.success:
+                logger.info("YouTube upload success: %s", result.url)
+            else:
+                logger.error("YouTube upload failed: %s", result.error)
+        else:
+            logger.info("[4/4] Skipping upload (no API key or no video file)")
 
         rate_limit_wait()
 
