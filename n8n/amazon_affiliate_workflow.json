@@ -1,0 +1,371 @@
+{
+  "name": "Amazon Affiliate Automation - نظام أتمتة التسويق بالعمولة",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "⏰ جدولة كل 6 ساعات",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/products/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ keywords: $json.keywords || 'best sellers electronics', category: $json.category || 'Electronics', min_rating: 4.0, count: 5 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "search-products",
+      "name": "🔍 بحث منتجات أمازون",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const products = $input.first().json.products || [];\nconst filtered = products.filter(p => {\n  const hasGoodRating = p.rating >= 4.0;\n  const hasDiscount = p.discount && p.discount >= 10;\n  const hasReviews = p.review_count >= 50;\n  return hasGoodRating && (hasDiscount || hasReviews);\n});\n\nreturn filtered.map(p => ({ json: p }));"
+      },
+      "id": "filter-products",
+      "name": "🎯 فلترة المنتجات الأفضل",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/content/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ product: $json, language: 'ar', content_types: ['product_review', 'deal_alert', 'recommendation'] }) }}"
+      },
+      "id": "generate-content",
+      "name": "🤖 توليد محتوى بالذكاء الاصطناعي",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const posts = $input.first().json.posts || [];\nconst now = new Date();\nconst hour = now.getHours();\n\n// اختيار أفضل منشور حسب الوقت\nlet selectedPost;\nif (hour >= 9 && hour < 12) {\n  selectedPost = posts.find(p => p.content_type === 'deal_alert') || posts[0];\n} else if (hour >= 12 && hour < 18) {\n  selectedPost = posts.find(p => p.content_type === 'product_review') || posts[0];\n} else {\n  selectedPost = posts.find(p => p.content_type === 'recommendation') || posts[0];\n}\n\nif (!selectedPost) return [];\n\n// تحضير المنشور لكل منصة\nconst twitterPost = {\n  platform: 'twitter',\n  text: selectedPost.content.substring(0, 275) + (selectedPost.content.length > 275 ? '...' : ''),\n  hashtags: (selectedPost.hashtags || []).slice(0, 3).join(' '),\n  image_url: selectedPost.image_url || ''\n};\n\nconst telegramPost = {\n  platform: 'telegram',\n  text: selectedPost.content,\n  hashtags: (selectedPost.hashtags || []).join(' '),\n  image_url: selectedPost.image_url || '',\n  parse_mode: 'HTML'\n};\n\nconst instagramPost = {\n  platform: 'instagram',\n  caption: selectedPost.content + '\\n\\n' + (selectedPost.hashtags || []).join(' '),\n  image_url: selectedPost.image_url || ''\n};\n\nreturn [\n  { json: { ...selectedPost, twitter: twitterPost, telegram: telegramPost, instagram: instagramPost } }\n];"
+      },
+      "id": "prepare-posts",
+      "name": "📝 تحضير المنشورات لكل منصة",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/publish/twitter",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.twitter) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "post-twitter",
+      "name": "🐦 نشر على تويتر",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 100],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/publish/telegram",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.telegram) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "post-telegram",
+      "name": "📨 نشر على تيليجرام",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/publish/instagram",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.instagram) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "post-instagram",
+      "name": "📸 نشر على إنستغرام",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, 500],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const twitterResult = $('🐦 نشر على تويتر').first().json || {};\nconst telegramResult = $('📨 نشر على تيليجرام').first().json || {};\nconst instagramResult = $('📸 نشر على إنستغرام').first().json || {};\n\nconst report = {\n  timestamp: new Date().toISOString(),\n  results: {\n    twitter: { success: twitterResult.success || false, post_id: twitterResult.post_id || '' },\n    telegram: { success: telegramResult.success || false, message_id: telegramResult.message_id || '' },\n    instagram: { success: instagramResult.success || false, media_id: instagramResult.media_id || '' }\n  },\n  product: $('📝 تحضير المنشورات لكل منصة').first().json?.product_asin || '',\n  content_type: $('📝 تحضير المنشورات لكل منصة').first().json?.content_type || ''\n};\n\nreturn [{ json: report }];"
+      },
+      "id": "collect-results",
+      "name": "📊 تجميع النتائج",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/analytics/log",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "log-analytics",
+      "name": "💾 حفظ التحليلات",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-failures",
+              "leftValue": "={{ $json.results.twitter.success === false && $json.results.telegram.success === false && $json.results.instagram.success === false }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-failures",
+      "name": "⚠️ فحص الأخطاء",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2100, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/notify/error",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: 'فشل النشر على جميع المنصات', details: $json }) }}"
+      },
+      "id": "notify-error",
+      "name": "🚨 إشعار بالخطأ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2350, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "trigger-post",
+        "options": {}
+      },
+      "id": "manual-webhook",
+      "name": "🔗 نشر يدوي (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 600],
+      "webhookId": "affiliate-manual-trigger"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "id": "daily-report-trigger",
+      "name": "📅 تقرير يومي",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 900]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/api/analytics/daily-report",
+        "options": {}
+      },
+      "id": "get-daily-report",
+      "name": "📈 جلب التقرير اليومي",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 900]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/publish/telegram",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ platform: 'telegram', text: '📊 التقرير اليومي:\\n\\n' + '✅ منشورات اليوم: ' + $json.posts_today + '\\n' + '👁️ المشاهدات: ' + $json.impressions + '\\n' + '🔗 النقرات: ' + $json.clicks + '\\n' + '💰 الأرباح المقدرة: $' + $json.estimated_revenue + '\\n\\n' + '🏆 أفضل منتج: ' + ($json.top_product || 'لا يوجد'), parse_mode: 'HTML' }) }}"
+      },
+      "id": "send-daily-report",
+      "name": "📩 إرسال التقرير",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 900]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add-product",
+        "options": {}
+      },
+      "id": "add-product-webhook",
+      "name": "➕ إضافة منتج (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 1200],
+      "webhookId": "affiliate-add-product"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/products/add",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "save-product",
+      "name": "💾 حفظ المنتج",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [250, 1200]
+    }
+  ],
+  "connections": {
+    "⏰ جدولة كل 6 ساعات": {
+      "main": [
+        [{ "node": "🔍 بحث منتجات أمازون", "type": "main", "index": 0 }]
+      ]
+    },
+    "🔗 نشر يدوي (Webhook)": {
+      "main": [
+        [{ "node": "🔍 بحث منتجات أمازون", "type": "main", "index": 0 }]
+      ]
+    },
+    "🔍 بحث منتجات أمازون": {
+      "main": [
+        [{ "node": "🎯 فلترة المنتجات الأفضل", "type": "main", "index": 0 }]
+      ]
+    },
+    "🎯 فلترة المنتجات الأفضل": {
+      "main": [
+        [{ "node": "🤖 توليد محتوى بالذكاء الاصطناعي", "type": "main", "index": 0 }]
+      ]
+    },
+    "🤖 توليد محتوى بالذكاء الاصطناعي": {
+      "main": [
+        [{ "node": "📝 تحضير المنشورات لكل منصة", "type": "main", "index": 0 }]
+      ]
+    },
+    "📝 تحضير المنشورات لكل منصة": {
+      "main": [
+        [
+          { "node": "🐦 نشر على تويتر", "type": "main", "index": 0 },
+          { "node": "📨 نشر على تيليجرام", "type": "main", "index": 0 },
+          { "node": "📸 نشر على إنستغرام", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "🐦 نشر على تويتر": {
+      "main": [
+        [{ "node": "📊 تجميع النتائج", "type": "main", "index": 0 }]
+      ]
+    },
+    "📨 نشر على تيليجرام": {
+      "main": [
+        [{ "node": "📊 تجميع النتائج", "type": "main", "index": 0 }]
+      ]
+    },
+    "📸 نشر على إنستغرام": {
+      "main": [
+        [{ "node": "📊 تجميع النتائج", "type": "main", "index": 0 }]
+      ]
+    },
+    "📊 تجميع النتائج": {
+      "main": [
+        [{ "node": "💾 حفظ التحليلات", "type": "main", "index": 0 }]
+      ]
+    },
+    "💾 حفظ التحليلات": {
+      "main": [
+        [{ "node": "⚠️ فحص الأخطاء", "type": "main", "index": 0 }]
+      ]
+    },
+    "⚠️ فحص الأخطاء": {
+      "main": [
+        [{ "node": "🚨 إشعار بالخطأ", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "📅 تقرير يومي": {
+      "main": [
+        [{ "node": "📈 جلب التقرير اليومي", "type": "main", "index": 0 }]
+      ]
+    },
+    "📈 جلب التقرير اليومي": {
+      "main": [
+        [{ "node": "📩 إرسال التقرير", "type": "main", "index": 0 }]
+      ]
+    },
+    "➕ إضافة منتج (Webhook)": {
+      "main": [
+        [{ "node": "💾 حفظ المنتج", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "affiliate" },
+    { "name": "automation" },
+    { "name": "amazon" }
+  ],
+  "pinData": {}
+}
