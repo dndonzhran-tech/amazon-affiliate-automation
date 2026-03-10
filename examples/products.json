@@ -1,0 +1,27 @@
+{
+  "products": [
+    {
+      "name": "Wireless Bluetooth Headphones",
+      "url": "https://www.amazon.com/dp/B09XYZ1234",
+      "price": 49.99,
+      "category": "Electronics",
+      "description": "High-quality wireless headphones with noise cancellation and 30-hour battery life",
+      "discount": 20
+    },
+    {
+      "name": "Stainless Steel Water Bottle",
+      "url": "https://www.amazon.com/dp/B09ABC5678",
+      "price": 24.99,
+      "category": "Kitchen",
+      "description": "Insulated water bottle that keeps drinks cold for 24 hours"
+    },
+    {
+      "name": "LED Desk Lamp",
+      "url": "https://www.amazon.com/dp/B09DEF9012",
+      "price": 34.99,
+      "category": "Office",
+      "description": "Adjustable LED desk lamp with USB charging port and 5 brightness levels",
+      "discount": 15
+    }
+  ]
+}

@@ -1,12 +1,16 @@
 {
   "scenarios": {
-    "en": [
-      "scenario_1": "Example scenario 1 in English",
-      "scenario_2": "Example scenario 2 in English"
-    ],
-    "ar": [
-      "scenario_1": "مثال على السيناريو 1 بالعربية",
-      "scenario_2": "مثال على السيناريو 2 بالعربية"
-    ]
+    "en": {
+      "product_review": "Check out this amazing product! {product_name} - {description}. Get it now at a great price! {link}",
+      "deal_alert": "DEAL ALERT! {product_name} is now available at {discount}% off! Don't miss out! {link}",
+      "comparison": "Looking for the best {category}? Here's why {product_name} stands out: {description}. {link}",
+      "recommendation": "I highly recommend {product_name} for anyone looking for {category}. {description}. {link}"
+    },
+    "ar": {
+      "product_review": "اكتشف هذا المنتج الرائع! {product_name} - {description}. احصل عليه الآن بسعر مميز! {link}",
+      "deal_alert": "تنبيه عرض! {product_name} متوفر الآن بخصم {discount}%! لا تفوت الفرصة! {link}",
+      "comparison": "تبحث عن أفضل {category}؟ إليك لماذا يتميز {product_name}: {description}. {link}",
+      "recommendation": "أنصح بشدة بـ {product_name} لأي شخص يبحث عن {category}. {description}. {link}"
+    }
   }
 }
