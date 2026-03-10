@@ -1,58 +1,138 @@
 # Amazon Affiliate Automation
 
-Automate the generation of social media posts for Amazon affiliate products. Supports English and Arabic content with customizable templates and hashtags.
+Full automation system for Amazon affiliate marketing. Scrapes products, generates social media content in English and Arabic, posts to Twitter and Telegram, and schedules automated campaigns.
+
+## Features
+
+- **Product Scraping**: Search Amazon products, bestsellers, and deals
+- **Content Generation**: Auto-generate posts with templates, hashtags, and emojis
+- **Multi-Platform Posting**: Twitter/X and Telegram support
+- **Scheduling**: Automated posting on intervals
+- **Database**: SQLite storage for products, posts, and schedules
+- **Bilingual**: Full English and Arabic support
+- **CLI**: Complete command-line interface with rich output
 
 ## Project Structure
 
 ```
 amazon-affiliate-automation/
 ├── src/
-│   ├── main.py          # Main application entry point
-│   ├── utils.py         # Utility functions (templates, hashtags, formatting)
-│   └── models.py        # Data models (Product, Post, Campaign)
+│   ├── main.py              # CLI entry point (Click)
+│   ├── models.py            # Data models + SQLAlchemy ORM
+│   ├── scraper.py           # Amazon product scraper
+│   ├── content_generator.py # Post content generator
+│   ├── database.py          # Database operations
+│   ├── scheduler.py         # Automated task scheduler
+│   ├── utils.py             # Utility functions
+│   └── social/
+│       ├── twitter.py       # Twitter/X integration
+│       └── telegram.py      # Telegram integration
 ├── config/
-│   ├── hashtags.json    # Hashtag sets (EN/AR)
-│   └── templates.json   # Post templates (EN/AR)
+│   ├── hashtags.json        # Hashtag sets (EN/AR)
+│   └── templates.json       # Post templates (EN/AR)
 ├── examples/
-│   └── products.json    # Example products file
-├── tests/               # Unit tests
-├── requirements.txt     # Python dependencies
-└── .env.example         # Environment variables template
+│   └── products.json        # Example products file
+├── tests/                   # Unit tests
+├── requirements.txt         # Python dependencies
+└── .env.example             # Environment variables template
 ```
 
 ## Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/dndonzhran-tech/amazon-affiliate-automation.git
-   cd amazon-affiliate-automation
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Configure environment:
-   ```bash
-   cp .env.example .env
-   # Edit .env and set your AFFILIATE_TAG
-   ```
+```bash
+git clone https://github.com/dndonzhran-tech/amazon-affiliate-automation.git
+cd amazon-affiliate-automation
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your credentials
+```
 
 ## Usage
 
+### Scrape Products
 ```bash
-# Generate posts in English
-python -m src.main --products examples/products.json --language en --scenario product_review
+# Search products by keyword
+python -m src.main scrape "wireless headphones" -n 10
 
-# Generate posts in Arabic
-python -m src.main --products examples/products.json --language ar --scenario deal_alert
+# Filter by price and rating
+python -m src.main scrape "laptop stand" --min-price 20 --max-price 50 --min-rating 4.0
 
-# Save output to file
-python -m src.main --products examples/products.json --output output.json
-
-# Available scenarios: product_review, deal_alert, comparison, recommendation
+# Save results to file
+python -m src.main scrape "usb hub" -o results.json
 ```
+
+### Generate Posts
+```bash
+# Generate from scraped products in database
+python -m src.main generate --platform twitter --language en
+
+# Generate from keyword (scrape + generate)
+python -m src.main generate -k "bluetooth speaker" -s deal_alert -l ar
+
+# Generate from products file
+python -m src.main generate -p examples/products.json -o posts.json
+
+# Rotate through scenarios
+python -m src.main generate -k "tech gadgets" -s rotate -n 10
+```
+
+### Post to Social Media
+```bash
+# Post to Twitter
+python -m src.main post -k "wireless earbuds" --platform twitter
+
+# Post to Telegram
+python -m src.main post -k "smart watch" --platform telegram -l ar
+
+# Post from products file
+python -m src.main post -p examples/products.json --platform telegram
+```
+
+### Schedule Automated Posts
+```bash
+# Add a schedule (every 60 minutes)
+python -m src.main schedule-cmd add "Tech Deals" -i 60 --platform twitter -c "tech gadgets"
+
+# Add Arabic Telegram schedule
+python -m src.main schedule-cmd add "عروض يومية" -i 120 --platform telegram -l ar -c "electronics"
+
+# List all schedules
+python -m src.main schedule-cmd list
+
+# Run scheduler (continuous)
+python -m src.main schedule-cmd run
+
+# Run all tasks once
+python -m src.main schedule-cmd run --once
+
+# Remove a schedule
+python -m src.main schedule-cmd remove 1
+```
+
+### Database Management
+```bash
+# View statistics
+python -m src.main stats
+
+# List products
+python -m src.main products -c "Electronics"
+
+# List generated posts
+python -m src.main posts --platform twitter --pending
+```
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `AFFILIATE_TAG` | Your Amazon affiliate tag |
+| `TWITTER_API_KEY` | Twitter API key |
+| `TWITTER_API_SECRET` | Twitter API secret |
+| `TWITTER_ACCESS_TOKEN` | Twitter access token |
+| `TWITTER_ACCESS_TOKEN_SECRET` | Twitter access token secret |
+| `TWITTER_BEARER_TOKEN` | Twitter bearer token |
+| `TELEGRAM_BOT_TOKEN` | Telegram bot token |
+| `TELEGRAM_CHAT_ID` | Telegram channel/group ID |
 
 ## Running Tests
 
@@ -60,10 +140,14 @@ python -m src.main --products examples/products.json --output output.json
 python -m pytest tests/ -v
 ```
 
-## Configuration
+## Post Templates
 
-### Templates (`config/templates.json`)
-Post templates with placeholders: `{product_name}`, `{description}`, `{link}`, `{category}`, `{discount}`
-
-### Hashtags (`config/hashtags.json`)
-Hashtag sets per language, randomly selected for each post.
+8 scenarios available in both English and Arabic:
+- `product_review` - Standard product review
+- `deal_alert` - Discount/deal notification
+- `comparison` - Category comparison
+- `recommendation` - Personal recommendation
+- `flash_sale` - Limited time offer
+- `top_pick` - Top pick highlight
+- `trending` - Trending product
+- `budget_friendly` - Value for money

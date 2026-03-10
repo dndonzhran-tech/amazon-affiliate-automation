@@ -4,13 +4,21 @@
       "product_review": "Check out this amazing product! {product_name} - {description}. Get it now at a great price! {link}",
       "deal_alert": "DEAL ALERT! {product_name} is now available at {discount}% off! Don't miss out! {link}",
       "comparison": "Looking for the best {category}? Here's why {product_name} stands out: {description}. {link}",
-      "recommendation": "I highly recommend {product_name} for anyone looking for {category}. {description}. {link}"
+      "recommendation": "I highly recommend {product_name} for anyone looking for {category}. {description}. {link}",
+      "flash_sale": "FLASH SALE! Limited time offer on {product_name}! Save {discount}% today! {link}",
+      "top_pick": "TOP PICK: {product_name} is our favorite in {category}. {description}. Grab yours now! {link}",
+      "trending": "TRENDING NOW: {product_name} is flying off the shelves! {description}. Get it before it's gone! {link}",
+      "budget_friendly": "Best value in {category}: {product_name} delivers quality without breaking the bank. {description}. {link}"
     },
     "ar": {
       "product_review": "اكتشف هذا المنتج الرائع! {product_name} - {description}. احصل عليه الآن بسعر مميز! {link}",
       "deal_alert": "تنبيه عرض! {product_name} متوفر الآن بخصم {discount}%! لا تفوت الفرصة! {link}",
       "comparison": "تبحث عن أفضل {category}؟ إليك لماذا يتميز {product_name}: {description}. {link}",
-      "recommendation": "أنصح بشدة بـ {product_name} لأي شخص يبحث عن {category}. {description}. {link}"
+      "recommendation": "أنصح بشدة بـ {product_name} لأي شخص يبحث عن {category}. {description}. {link}",
+      "flash_sale": "تخفيض سريع! عرض محدود على {product_name}! وفر {discount}% اليوم! {link}",
+      "top_pick": "اختيارنا الأول: {product_name} هو المفضل لدينا في {category}. {description}. احصل عليه الآن! {link}",
+      "trending": "رائج الآن: {product_name} ينفد بسرعة! {description}. احصل عليه قبل نفاد الكمية! {link}",
+      "budget_friendly": "أفضل قيمة في {category}: {product_name} يقدم جودة عالية بسعر مناسب. {description}. {link}"
     }
   }
 }
