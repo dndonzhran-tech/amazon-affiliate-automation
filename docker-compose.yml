@@ -1,0 +1,15 @@
+services:
+  automation:
+    build: .
+    env_file: .env
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+
+  cron:
+    build: .
+    env_file: .env
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+    command: ["python", "src/main.py", "--schedule"]

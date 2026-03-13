@@ -1,12 +1,20 @@
 {
   "scenarios": {
-    "en": [
-      "scenario_1": "Example scenario 1 in English",
-      "scenario_2": "Example scenario 2 in English"
-    ],
-    "ar": [
-      "scenario_1": "مثال على السيناريو 1 بالعربية",
-      "scenario_2": "مثال على السيناريو 2 بالعربية"
-    ]
+    "en": {
+      "deal_alert": "🚨 DEAL ALERT! {product_name} is now available at an incredible price! Don't miss this limited-time offer 👉 {affiliate_link}",
+      "top_pick": "⭐ TOP PICK: {product_name} — highly rated and trending right now! Grab yours before it's gone 👉 {affiliate_link}",
+      "review_style": "I just found {product_name} and it's a game changer! Here's why you need it 👇 {affiliate_link}",
+      "comparison": "Looking for the best deal on {product_name}? I compared prices and this one wins 🏆 {affiliate_link}",
+      "urgency": "⏰ LIMITED TIME: {product_name} at the lowest price I've seen! Act fast — this won't last 👉 {affiliate_link}",
+      "value_prop": "💡 Smart buy: {product_name} — premium quality at an unbeatable price. See for yourself 👉 {affiliate_link}"
+    },
+    "ar": {
+      "deal_alert": "🚨 تنبيه عرض! {product_name} متوفر الآن بسعر لا يُصدّق! لا تفوّت هذا العرض المحدود 👈 {affiliate_link}",
+      "top_pick": "⭐ اختيارنا الأفضل: {product_name} — تقييم عالي ورائج الآن! احصل عليه قبل نفاد الكمية 👈 {affiliate_link}",
+      "review_style": "اكتشفت للتو {product_name} وهو مذهل! إليك لماذا تحتاجه 👇 {affiliate_link}",
+      "comparison": "تبحث عن أفضل سعر لـ {product_name}؟ قارنت الأسعار وهذا هو الأفضل 🏆 {affiliate_link}",
+      "urgency": "⏰ عرض محدود: {product_name} بأقل سعر شفته! تصرّف بسرعة — لن يدوم طويلاً 👈 {affiliate_link}",
+      "value_prop": "💡 شراء ذكي: {product_name} — جودة ممتازة بسعر لا يُقاوم. شاهد بنفسك 👈 {affiliate_link}"
+    }
   }
 }
